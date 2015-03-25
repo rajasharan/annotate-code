@@ -3,17 +3,14 @@
 <more-routing-config driver="hash"></more-routing-config>
 
 <more-route name="root" path="/"></more-route>
+
 <more-route name="github" path="/:owner/:repo">
-  <more-route name="commits" path="/commits"></more-route>
-  <more-route name="commit" path="/commits/:sha"></more-route>
-  <more-route name="tree" path="/trees/:sha"></more-route>
-  <more-route name="blob" path="/blobs/:sha"></more-route>
+  <more-route name="head" path="/HEAD/tree"></more-route>
+  <more-route name="blob" path="/blobs/:path/:sha"></more-route>
 </more-route>
 
 <link rel="import" href="../bower_components/core-pages/core-pages.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
-<!--<link rel="import" href="github-template/github-template.html">-->
 <link rel="import" href="github-search/github-search.html">
-<link rel="import" href="github-commits/github-commits.html">
 <link rel="import" href="github-tree/github-tree.html">
 <link rel="import" href="github-blob/github-blob.html">

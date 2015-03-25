@@ -9,11 +9,14 @@
       :host {
         display: block;
       }
+      paper-input {
+          margin-left: 10px;
+      }
     </style>
 
     <core-field>
-      <paper-input label="Owner" floatingLabel value="{{owner}}"></paper-input>
-      <paper-input label="Repo" floatingLabel value="{{repo}}"></paper-input>
+      <paper-input label="github user" floatingLabel value="{{owner}}"></paper-input>
+      <paper-input label="github repo" floatingLabel value="{{repo}}"></paper-input>
       <paper-button raised on-tap="{{search}}">Search</paper-button>
     </core-field>
 
@@ -22,8 +25,13 @@
     (function () {
 
       Polymer({
+        publish: {
+          owner: 'rajasharan',
+          repo: 'javascript-bytes'
+        },
+
         search: function(event, detail, sender) {
-          MoreRouting.navigateTo('commits', {owner: this.owner, repo: this.repo});
+          MoreRouting.navigateTo('head', {owner: this.owner, repo: this.repo});
         }
       });
 

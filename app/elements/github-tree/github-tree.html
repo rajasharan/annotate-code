@@ -6,7 +6,9 @@
 
 <polymer-element name="github-tree" attributes="">
   <template>
-    <more-route context name="tree" params="{{params}}"></more-route>
+    <!--<more-route context name="tree" params="{{params}}"></more-route>-->
+    <more-route context name="head" params="{{params}}"></more-route>
+
     <style>
       :host {
         display: block;
@@ -15,21 +17,33 @@
       core-list {
         height: 100%;
       }
+      pre {
+        padding-left: 10px;
+      }
     </style>
 
     <core-list data="{{tree}}" height="20" id="list">
       <template>
-        <a href="{{urlFor('blob', {path: [[model.path]], sha: [[model.sha]]})}}">{{model.path}}</a>
+        <pre><code><a href="{{urlFor('blob', {path: encodeURIComponent([[model.path]]), sha: [[model.sha]]})}}">{{model.path}}</a></code></pre>
       </template>
     </core-list>
 
     <core-ajax
-        id="ajax"
-        url="{{url}}"
+        id="ajaxCommits"
+        url="{{commitsURL}}"
         handleAs="json"
         headers='{"Accept": "application/vnd.github.v3+json"}'
-        on-core-response="{{responseHandler}}"
-        on-core-error="{{errorHandler}}">
+        on-core-response="{{responseCommits}}"
+        on-core-error="{{errorCommits}}">
+    </core-ajax>
+
+    <core-ajax
+        id="ajaxTree"
+        url="{{treeURL}}"
+        handleAs="json"
+        headers='{"Accept": "application/vnd.github.v3+json"}'
+        on-core-response="{{responseTree}}"
+        on-core-error="{{errorTree}}">
     </core-ajax>
 
   </template>
@@ -37,28 +51,32 @@
     (function () {
 
       Polymer({
-        formatPath: function(value) {
-          console.log('formatPath: ', value);
-          if(!value) return value;
-          else return value.replace(/\//g,'-').replace(/\s/g, '');
+        encodeURIComponent: function(val) {
+          if (!val) return val;
+          else return window.encodeURIComponent(val);
         },
 
         publish: {
-          url: '',
-          sha: '',
-          tree: []
+          tree: [],
+          commits: []
         },
 
         observe: {
-          'params.sha': 'valueChanged',
-          'params.url': 'valueChanged'
+          'params.owner': 'loadCommits',
+          'params.repo': 'loadCommits'
         },
 
-        valueChanged: function(oldval, newval) {
-          console.log('tree: ', this.params);
+        loadCommits: function(oldval, newval) {
           if (!newval) return;
-          this.url = 'https://api.github.com/repos/' + this.params.owner + '/' + this.params.repo + '/git/trees/' + this.params.sha + '?recursive=1';
-          this.$.ajax.go();
+          this.commitsURL = 'https://api.github.com/repos/' + this.params.owner + '/' + this.params.repo + '/commits';
+          this.$.ajaxCommits.go();
+        },
+
+        loadTree: function(tree) {
+          if (!tree || !tree.sha) return;
+          console.log('tree: ', this.params, tree.sha);
+          this.treeURL = 'https://api.github.com/repos/' + this.params.owner + '/' + this.params.repo + '/git/trees/' + tree.sha + '?recursive=1';
+          this.$.ajaxTree.go();
         },
 
         ready: function() {
@@ -70,10 +88,21 @@
           event.preventDefault();
           var model = event.target.templateInstance.model.model;
           console.log('blob-click: ', model);
-          MoreRouting.navigateTo('blob', {path: model.path, sha: model.sha});
+          MoreRouting.navigateTo('blob', {path: encodeURIComponent(model.path), sha: model.sha});
         },
 
-        responseHandler: function(event, detail, sender) {
+        responseCommits: function(event, detail, sender) {
+          console.log('SUCCESS /commits: ', detail);
+          this.commits = detail.response[0];
+          var tree = this.commits.commit.tree;
+          this.loadTree({sha: tree.sha});
+        },
+
+        errorCommits: function(event, detail, sender) {
+          console.log('ERROR /tree: ', detail);
+        },
+
+        responseTree: function(event, detail, sender) {
           console.log('SUCCESS /tree: ', detail.response.tree);
           this.tree = detail.response.tree.filter(function(elem) {
             if(elem.type === "blob") {
@@ -85,13 +114,8 @@
           });
         },
 
-        errorHandler: function(event, detail, sender) {
+        errorTree: function(event, detail, sender) {
           console.log('ERROR /tree: ', detail);
-        },
-
-        inspect: function() {
-          console.log("<github-tree>");
-          console.log({url: this.url, tree: this.tree, sha: this.sha});
         }
       });
 

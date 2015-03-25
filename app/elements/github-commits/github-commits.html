@@ -55,19 +55,6 @@
     (function () {
 
       Polymer({
-        publish: {
-          owner: {
-            value: 'rajasharan',
-            reflect: true
-          },
-          repo: {
-            value: 'javascript-bytes',
-            reflect: true
-          },
-          commits: [],
-          url: ""
-        },
-
         observe: {
           'params.owner': 'valueChanged',
           'params.repo': 'valueChanged'
@@ -87,7 +74,9 @@
 
         responseHandler: function(event, detail, sender) {
           console.log('SUCCESS /commits: ', detail);
-          this.commits = detail.response;
+          this.commits = detail.response[0];
+          var tree = this.commits.commit.tree;
+          MoreRouting.navigateTo('tree', {sha: tree.sha, url: tree.url});
         },
         errorHandler: function(event, detail, sender) {
           console.log('ERROR on /commits: ', detail)
@@ -98,16 +87,6 @@
           var tree = model.commit.tree;
           //console.log('tree-click: ', model.commit.tree.url);
           MoreRouting.navigateTo('tree', {sha: tree.sha, url: tree.url});
-        },
-
-        update: function() {
-          console.log(this.$.list);
-          this.$.list.updateSize();
-        },
-
-        inspect: function() {
-          console.log("<github-commits>");
-          console.log({owner: this.owner, repo: this.repo, commits: this.commits, url: this.url});
         }
       });
 
