@@ -1,0 +1,116 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/core-ajax/core-ajax.html">
+<link rel="import" href="../../bower_components/core-item/core-item.html">
+<link rel="import" href="../../bower_components/core-list/core-list.html">
+<link rel="import" href="../../bower_components/paper-shadow/paper-shadow.html">
+<link rel="import" href="../../bower_components/paper-ripple/paper-ripple.html">
+<link rel="import" href="../../bower_components/more-routing/more-route.html">
+
+<polymer-element name="github-commits">
+  <template>
+    <more-route context name="commits" params="{{params}}"></more-route>
+
+    <style>
+      :host {
+        display: block;
+        height: 100%;
+      }
+      core-list {
+          height: 100%;
+      }
+      .commit-item {
+        position: relative;
+        background-color: #efefef;
+        border: 1px solid #ddd;
+        border-radius: 15px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        cursor: pointer;
+      }
+    </style>
+
+    <core-list data="{{commits}}" height="100" id="list">
+      <template>
+        <div class="commit-item" on-tap="{{treeClickHandler}}">
+          <paper-ripple fit></paper-ripple>
+          <div>{{model.sha}} - <em>by {{model.committer.login}}</em></div>
+          <div>{{model.commit.message}}</div>
+          <div>Tree: {{model.commit.tree.sha}}</div>
+          <div>Parents: {{model.parents.length}}</div>
+        </div>
+      </template>
+    </core-list>
+
+    <core-ajax
+        id="ajax"
+        url="{{url}}"
+        handleAs="json"
+        headers='{"Accept": "application/vnd.github.v3+json"}'
+        on-core-response="{{responseHandler}}"
+        on-core-error="{{errorHandler}}">
+    </core-ajax>
+
+  </template>
+  <script>
+    (function () {
+
+      Polymer({
+        publish: {
+          owner: {
+            value: 'rajasharan',
+            reflect: true
+          },
+          repo: {
+            value: 'javascript-bytes',
+            reflect: true
+          },
+          commits: [],
+          url: ""
+        },
+
+        observe: {
+          'params.owner': 'valueChanged',
+          'params.repo': 'valueChanged'
+        },
+
+        valueChanged: function(oldval, newval) {
+          if (!newval || newval.trim() === "") return;
+          console.log('valueChanged: ', oldval, newval);
+          console.log('<github-commits> params: ', this.params);
+          this.url = 'https://api.github.com/repos/' + this.params.owner + '/' + this.params.repo + '/commits';
+          this.load();
+        },
+
+        load: function() {
+          this.$.ajax.go();
+        },
+
+        responseHandler: function(event, detail, sender) {
+          console.log('SUCCESS /commits: ', detail);
+          this.commits = detail.response;
+        },
+        errorHandler: function(event, detail, sender) {
+          console.log('ERROR on /commits: ', detail)
+        },
+
+        treeClickHandler: function(event, detail, sender) {
+          var model = event.target.templateInstance.model.model;
+          var tree = model.commit.tree;
+          //console.log('tree-click: ', model.commit.tree.url);
+          MoreRouting.navigateTo('tree', {sha: tree.sha, url: tree.url});
+        },
+
+        update: function() {
+          console.log(this.$.list);
+          this.$.list.updateSize();
+        },
+
+        inspect: function() {
+          console.log("<github-commits>");
+          console.log({owner: this.owner, repo: this.repo, commits: this.commits, url: this.url});
+        }
+      });
+
+    })();
+  </script>
+</polymer-element>

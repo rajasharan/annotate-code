@@ -1,0 +1,32 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/core-field/core-field.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+
+<polymer-element name="github-search" attributes="">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <core-field>
+      <paper-input label="Owner" floatingLabel value="{{owner}}"></paper-input>
+      <paper-input label="Repo" floatingLabel value="{{repo}}"></paper-input>
+      <paper-button raised on-tap="{{search}}">Search</paper-button>
+    </core-field>
+
+  </template>
+  <script>
+    (function () {
+
+      Polymer({
+        search: function(event, detail, sender) {
+          MoreRouting.navigateTo('commits', {owner: this.owner, repo: this.repo});
+        }
+      });
+
+    })();
+  </script>
+</polymer-element>

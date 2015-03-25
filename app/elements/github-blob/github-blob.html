@@ -1,0 +1,136 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/core-ajax/core-ajax.html">
+<link rel="import" href="../../bower_components/core-list/core-list.html">
+
+<polymer-element name="github-blob" attributes="">
+  <template>
+    <more-route context name="blob" params="{{params}}"></more-route>
+    <style>
+      :host {
+        display: block;
+        height: 100%;
+      }
+      /*
+      pre {
+        font-family: "Courier 10 Pitch", Courier, monospace;
+        font-size: 95%;
+        line-height: 140%;
+        white-space: pre;
+        white-space: pre-wrap;
+        white-space: -moz-pre-wrap;
+        white-space: -o-pre-wrap;
+      }
+      code {
+        font-family: Monaco, Consolas, "Andale Mono", "DejaVu Sans Mono", monospace;
+        font-size: 95%;
+        line-height: 140%;
+        white-space: pre;
+        white-space: pre-wrap;
+        white-space: -moz-pre-wrap;
+        white-space: -o-pre-wrap;
+        background: #faf8f0;
+      }
+      */
+      code {
+        cursor: pointer;
+      }
+      .selected-true {
+        background-color: #8FDBF2;
+      }
+      core-list {
+        height: 100%;
+        margin-left: 10px;
+      }
+    </style>
+
+    <core-list data="{{lines}}" height="20" selectionEnabled multi>
+      <template>
+        <pre><code><span class="selected-{{selected}}">{{index | formatNumber}} </span>| {{model.line}}</code></pre>
+      </template>
+    </core-list>
+
+    <core-ajax
+        id="ajax"
+        url="{{url}}"
+        handleAs="text"
+        headers='{"Accept": "application/vnd.github.v3.raw"}'
+        on-core-response="{{responseHandler}}"
+        on-core-error="{{errorHandler}}">
+    </core-ajax>
+  </template>
+  <script>
+    (function () {
+
+      Polymer({
+        publish: {
+          sha: '',
+          path: '',
+          url: '',
+          lines: []
+        },
+
+        observe: {
+            'params.path': 'valueChanged',
+            'params.sha': 'valueChanged'
+        },
+
+        valueChanged: function(oldval, newval) {
+            if (!newval) return;
+            console.log('blob: ', this.params);
+            this.url = 'https://api.github.com/repos/' + this.params.owner + '/' + this.params.repo + '/git/blobs/' + this.params.sha;
+            this.$.ajax.go();
+        },
+
+        ready: function() {
+          //this.lines = [];
+          //this.$.ajax.go();
+        },
+
+        formatNumber: function(value) {
+          if (value === undefined || value === null) return value;
+
+          value = value+1;
+          var total = this.lines.length.toString().length;
+          var len = value.toString().length;
+          var diff = total - len;
+
+          if (diff > 0) {
+            var arr = Array.apply(null, Array(diff));
+            arr = arr.map(function() { return ' ';});
+            arr = arr.reduce(function(prev, curr) {
+              return prev+curr;
+            });
+
+            return value+arr;
+          }
+
+          return value+"";
+        },
+
+        responseHandler: function(event, detail, sender) {
+          //console.log('SUCCESS /blob: ', detail.response);
+          this.generateSourceLines(detail.response);
+        },
+
+        generateSourceLines: function(content) {
+          this.lines = content.split('\n').map(function(elem) {
+            return {line: elem};
+          });
+        },
+
+        errorHandler: function(event, detail, sender) {
+          console.log('ERROR /blob: ', detail.response.response);
+          this.generateSourceLines(detail.response.response);
+        },
+
+        hover: function(event, detail, sender) {
+          console.log(sender);
+        },
+
+        unhover: function(event, detail, sender) {
+        }
+      });
+
+    })();
+  </script>
+</polymer-element>

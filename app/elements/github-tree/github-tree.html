@@ -1,0 +1,100 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/core-ajax/core-ajax.html">
+<link rel="import" href="../../bower_components/core-list/core-list.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/more-routing/more-route.html">
+
+<polymer-element name="github-tree" attributes="">
+  <template>
+    <more-route context name="tree" params="{{params}}"></more-route>
+    <style>
+      :host {
+        display: block;
+        height: 100%;
+      }
+      core-list {
+        height: 100%;
+      }
+    </style>
+
+    <core-list data="{{tree}}" height="20" id="list">
+      <template>
+        <a href="{{urlFor('blob', {path: [[model.path]], sha: [[model.sha]]})}}">{{model.path}}</a>
+      </template>
+    </core-list>
+
+    <core-ajax
+        id="ajax"
+        url="{{url}}"
+        handleAs="json"
+        headers='{"Accept": "application/vnd.github.v3+json"}'
+        on-core-response="{{responseHandler}}"
+        on-core-error="{{errorHandler}}">
+    </core-ajax>
+
+  </template>
+  <script>
+    (function () {
+
+      Polymer({
+        formatPath: function(value) {
+          console.log('formatPath: ', value);
+          if(!value) return value;
+          else return value.replace(/\//g,'-').replace(/\s/g, '');
+        },
+
+        publish: {
+          url: '',
+          sha: '',
+          tree: []
+        },
+
+        observe: {
+          'params.sha': 'valueChanged',
+          'params.url': 'valueChanged'
+        },
+
+        valueChanged: function(oldval, newval) {
+          console.log('tree: ', this.params);
+          if (!newval) return;
+          this.url = 'https://api.github.com/repos/' + this.params.owner + '/' + this.params.repo + '/git/trees/' + this.params.sha + '?recursive=1';
+          this.$.ajax.go();
+        },
+
+        ready: function() {
+          //console.log('<github-tree> ready: ', this.params);
+          //this.$.ajax.go();
+        },
+
+        navigate: function(event, detail, sender) {
+          event.preventDefault();
+          var model = event.target.templateInstance.model.model;
+          console.log('blob-click: ', model);
+          MoreRouting.navigateTo('blob', {path: model.path, sha: model.sha});
+        },
+
+        responseHandler: function(event, detail, sender) {
+          console.log('SUCCESS /tree: ', detail.response.tree);
+          this.tree = detail.response.tree.filter(function(elem) {
+            if(elem.type === "blob") {
+              return true;
+            }
+            else {
+              return false;
+            }
+          });
+        },
+
+        errorHandler: function(event, detail, sender) {
+          console.log('ERROR /tree: ', detail);
+        },
+
+        inspect: function() {
+          console.log("<github-tree>");
+          console.log({url: this.url, tree: this.tree, sha: this.sha});
+        }
+      });
+
+    })();
+  </script>
+</polymer-element>
