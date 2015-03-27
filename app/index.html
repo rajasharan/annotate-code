@@ -26,7 +26,12 @@
 
   <!--<github-template></github-template>-->
   <template is="auto-binding">
-    <paper-item noink><a href="{{urlFor('root')}}">HOME</a></paper-item>
+    <style>
+      core-pages > :not(.core-selected) {
+        display: none;
+      }
+    </style>
+    <paper-item noink><a href="{{urlFor('root')}}">Annotate Code</a></paper-item>
 
     <more-route-selector selectedParams="{{params}}">
       <core-pages class="layout">

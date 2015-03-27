@@ -1,0 +1,53 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<polymer-element name="annotation-view">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+      pre {
+        margin: 0px;
+      }
+      .scroll {
+        overflow: auto;
+        border-radius: 5px;
+        border: 1px solid red;
+        width: 45vw;
+        max-height: 25vh;
+        padding: 10px;
+      }
+    </style>
+
+    <template if="{{lines.length > 0}}">
+    <div class="scroll">
+      <template repeat="{{elem in lines}}">
+        <pre><code>{{elem.line}}</code></pre>
+      </template>
+    </div>
+    </template>
+
+  </template>
+  <script>
+    (function () {
+
+      Polymer({
+        publish: {
+          lines: []
+        },
+
+        observe: {
+          'lines': 'update'
+        },
+
+        update: function(oldval, newval) {
+          //console.log(this.lines);
+          this.lines.sort(function(a, b) {
+            return a.number - b.number;
+          });
+        }
+      });
+
+    })();
+  </script>
+</polymer-element>

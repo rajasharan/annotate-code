@@ -2,6 +2,7 @@
 <link rel="import" href="../../bower_components/core-field/core-field.html">
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/core-a11y-keys/core-a11y-keys.html">
 
 <polymer-element name="github-search" attributes="">
   <template>
@@ -13,6 +14,8 @@
           margin-left: 10px;
       }
     </style>
+
+    <core-a11y-keys target="{{}}" keys="enter" on-keys-pressed="{{search}}"></core-a11y-keys>
 
     <core-field>
       <paper-input label="github user" floatingLabel value="{{owner}}"></paper-input>
@@ -31,6 +34,7 @@
         },
 
         search: function(event, detail, sender) {
+          console.log('Search: ', detail);
           MoreRouting.navigateTo('head', {owner: this.owner, repo: this.repo});
         }
       });

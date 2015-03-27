@@ -1,6 +1,11 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/core-ajax/core-ajax.html">
 <link rel="import" href="../../bower_components/core-list/core-list.html">
+<link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../bower_components/paper-tabs/paper-tab.html">
+<link rel="import" href="../../bower_components/core-pages/core-pages.html">
+
+<link rel="import" href="../annotation-view/annotation-view.html">
 
 <polymer-element name="github-blob" attributes="">
   <template>
@@ -8,29 +13,14 @@
     <style>
       :host {
         display: block;
-        height: 100%;
+        /* height: 100%; */
       }
-      /*
-      pre {
-        font-family: "Courier 10 Pitch", Courier, monospace;
-        font-size: 95%;
-        line-height: 140%;
-        white-space: pre;
-        white-space: pre-wrap;
-        white-space: -moz-pre-wrap;
-        white-space: -o-pre-wrap;
+      paper-item {
+        cursor: default;
+        font-size: 14px;
+        font-style: italic;
+        height: 5vh;
       }
-      code {
-        font-family: Monaco, Consolas, "Andale Mono", "DejaVu Sans Mono", monospace;
-        font-size: 95%;
-        line-height: 140%;
-        white-space: pre;
-        white-space: pre-wrap;
-        white-space: -moz-pre-wrap;
-        white-space: -o-pre-wrap;
-        background: #faf8f0;
-      }
-      */
       code {
         cursor: pointer;
       }
@@ -38,17 +28,43 @@
         background-color: #8FDBF2;
       }
       core-list {
-        height: 100%;
+        /* height: 100%; */
+        height: 85vh;
         margin-left: 10px;
+      }
+      core-pages {
+        position: fixed;
+        left: 52vw;
+        width: 48vw;
+        height: 80vh;
+      }
+      paper-tabs {
+        height: 10vh;
       }
     </style>
 
-    <core-list data="{{lines}}" height="20" selectionEnabled multi>
-      <template>
-        <pre><code><span class="selected-{{selected}}">{{index | formatNumber}} </span>| {{model.line}}</code></pre>
-      </template>
-    </core-list>
+    <div layout horizontal>
+      <div flex>
+        <paper-item noink>{{params.path | decodeURIComponent}}</paper-item>
+        <core-list id="list" data="{{lines}}" selection="{{selection}}" height="20" selectionEnabled multi>
+          <template>
+            <pre><code><span class="selected-{{selected}}">{{index | formatLineNumberWidth}} </span>| {{model.line}}</code></pre>
+          </template>
+        </core-list>
+      </div>
 
+      <div flex layout vertical>
+        <paper-tabs selected="{{tabSelected}}">
+          <paper-tab>Add new Annotation</paper-tab>
+          <paper-tab>View existings Annotations</paper-tab>
+        </paper-tabs>
+
+        <core-pages selected="{{tabSelected}}">
+          <annotation-view lines="{{selection}}"></annotation-view>
+          <div>WORK IN PROGRESS</div>
+        </core-pages>
+      </div>
+    </div>
     <core-ajax
         id="ajax"
         url="{{url}}"
@@ -62,6 +78,13 @@
     (function () {
 
       Polymer({
+        decodeURIComponent: function(val) {
+          if (!val) return val;
+          else return window.decodeURIComponent(val);
+        },
+
+        tabSelected: 0,
+
         publish: {
           sha: '',
           path: '',
@@ -70,23 +93,24 @@
         },
 
         observe: {
-            'params.path': 'valueChanged',
-            'params.sha': 'valueChanged'
+          'params.path': 'valueChanged',
+          'params.sha': 'valueChanged'
         },
 
         valueChanged: function(oldval, newval) {
-            if (!newval) return;
-            console.log('blob: ', this.params);
-            this.url = 'https://api.github.com/repos/' + this.params.owner + '/' + this.params.repo + '/git/blobs/' + this.params.sha;
-            this.$.ajax.go();
+          console.log('blob: |', oldval, '->', newval, '|');
+          if (!newval) return;
+          //console.log('blob: ', this.params);
+          this.url = 'https://api.github.com/repos/' + this.params.owner + '/' + this.params.repo + '/git/blobs/' + this.params.sha;
+          this.$.ajax.go();
+          //this.$.list.updateSize();
         },
 
-        ready: function() {
-          //this.lines = [];
-          //this.$.ajax.go();
+        domReady: function() {
+          this.$.list.updateSize();
         },
 
-        formatNumber: function(value) {
+        formatLineNumberWidth: function(value) {
           if (value === undefined || value === null) return value;
 
           value = value+1;
@@ -113,9 +137,12 @@
         },
 
         generateSourceLines: function(content) {
-          this.lines = content.split('\n').map(function(elem) {
-            return {line: elem};
+          this.$.list.updateSize();
+          this.lines = content.split('\n').map(function(elem, index) {
+            return {line: elem, number: index+1};
           });
+          this.$.list.updateSize();
+          //console.log('core-list updateSize:', this.params, this.lines);
         },
 
         errorHandler: function(event, detail, sender) {
@@ -123,11 +150,15 @@
           this.generateSourceLines(detail.response.response);
         },
 
-        hover: function(event, detail, sender) {
-          console.log(sender);
-        },
-
-        unhover: function(event, detail, sender) {
+        /* can be called from on-core-activate if needed,
+         * but currently not being used
+        */
+        lineSelected: function(event, detail, sender) {
+          //console.log('LineSelected: ', detail.data.line);
+          //console.log('Selection: ', this.selection);
+          this.selection.forEach(function(elem) {
+            console.log(elem.number, ': ', elem.line);
+          });
         }
       });
 

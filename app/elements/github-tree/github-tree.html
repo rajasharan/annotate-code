@@ -12,10 +12,11 @@
     <style>
       :host {
         display: block;
-        height: 100%;
+        /* height: 100%; */
       }
       core-list {
-        height: 100%;
+        height: 90vh;
+        /* height: 100%; */
       }
       pre {
         padding-left: 10px;
@@ -74,7 +75,7 @@
 
         loadTree: function(tree) {
           if (!tree || !tree.sha) return;
-          console.log('tree: ', this.params, tree.sha);
+          //console.log('tree: ', this.params, tree.sha);
           this.treeURL = 'https://api.github.com/repos/' + this.params.owner + '/' + this.params.repo + '/git/trees/' + tree.sha + '?recursive=1';
           this.$.ajaxTree.go();
         },
@@ -84,15 +85,16 @@
           //this.$.ajax.go();
         },
 
+        /* using anchor directly instead of this */
         navigate: function(event, detail, sender) {
           event.preventDefault();
           var model = event.target.templateInstance.model.model;
-          console.log('blob-click: ', model);
+          //console.log('blob-click: ', model);
           MoreRouting.navigateTo('blob', {path: encodeURIComponent(model.path), sha: model.sha});
         },
 
         responseCommits: function(event, detail, sender) {
-          console.log('SUCCESS /commits: ', detail);
+          //console.log('SUCCESS /commits: ', detail);
           this.commits = detail.response[0];
           var tree = this.commits.commit.tree;
           this.loadTree({sha: tree.sha});
@@ -103,7 +105,7 @@
         },
 
         responseTree: function(event, detail, sender) {
-          console.log('SUCCESS /tree: ', detail.response.tree);
+          //console.log('SUCCESS /tree: ', detail.response.tree);
           this.tree = detail.response.tree.filter(function(elem) {
             if(elem.type === "blob") {
               return true;
