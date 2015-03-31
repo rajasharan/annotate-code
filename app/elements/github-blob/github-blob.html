@@ -5,7 +5,7 @@
 <link rel="import" href="../../bower_components/paper-tabs/paper-tab.html">
 <link rel="import" href="../../bower_components/core-pages/core-pages.html">
 
-<link rel="import" href="../annotation-view/annotation-view.html">
+<link rel="import" href="../annotation-views/annotation-add.html">
 
 <polymer-element name="github-blob" attributes="">
   <template>
@@ -41,6 +41,12 @@
       paper-tabs {
         height: 10vh;
       }
+      paper-tabs::shadow #selectionBar {
+        background-color: #4aa846;
+      }
+      paper-tabs paper-tab::shadow #ink {
+        color: #4aa846;
+      }
     </style>
 
     <div layout horizontal>
@@ -60,7 +66,7 @@
         </paper-tabs>
 
         <core-pages selected="{{tabSelected}}">
-          <annotation-view lines="{{selection}}"></annotation-view>
+          <annotation-add lines="{{selection}}"></annotation-add>
           <div>WORK IN PROGRESS</div>
         </core-pages>
       </div>

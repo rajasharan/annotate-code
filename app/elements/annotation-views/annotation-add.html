@@ -1,0 +1,76 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-input/paper-autogrow-textarea.html">
+
+<polymer-element name="annotation-add">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+      pre {
+        margin: 0px;
+      }
+      .code {
+        overflow: auto;
+        border-radius: 5px;
+        border: 1px solid red;
+        width: 45vw;
+        max-height: 25vh;
+        padding: 10px;
+      }
+      .margin {
+        margin-top: 10px;
+        margin-bottom: 10px;
+      }
+      #comment {
+        font-family: monospace;
+        font-size: large;
+        background-color: aliceblue;
+        width: 46vw;
+      }
+    </style>
+
+    <template if="{{lines.length > 0}}">
+      <div class="code">
+        <template repeat="{{elem in lines}}">
+          <pre><code>{{elem.line}}</code></pre>
+        </template>
+      </div>
+    </template>
+
+    <div class="margin">
+      <paper-autogrow-textarea rows="5" maxRows="5">
+        <textarea id="comment" placeholder="Tap on few lines of code and add annotation here..."></textarea>
+      </paper-autogrow-textarea>
+    </div>
+    <paper-button raised on-tap="{{annotate}}">Annotate</paper-button>
+
+  </template>
+  <script>
+    (function () {
+
+      Polymer({
+        publish: {
+          lines: []
+        },
+
+        observe: {
+          'lines': 'update'
+        },
+
+        update: function(oldval, newval) {
+          //console.log(this.lines);
+          this.lines.sort(function(a, b) {
+            return a.number - b.number;
+          });
+        },
+
+        annotate: function(event, detail, sender) {
+          console.log(this.$.comment.value);
+        }
+      });
+
+    })();
+  </script>
+</polymer-element>
