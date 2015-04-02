@@ -1,0 +1,5 @@
+<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><title>annotate code</title><meta name="description" content><meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes"><link rel="stylesheet" href="styles/main.css"><script src="bower_components/webcomponentsjs/webcomponents.min.js"></script><link rel="import" href="elements/elements.vulcanized.html"></head><body unresolved fullbleed><template is="auto-binding"><style>
+      core-pages > :not(.core-selected) {
+        display: none;
+      }
+    </style><paper-item noink><a href="{{urlFor('root')}}">Annotate Code</a></paper-item><more-route-selector selectedparams="{{params}}"><core-pages class="layout"><github-search route="root"></github-search><github-tree></github-tree><github-blob></github-blob></core-pages></more-route-selector></template><script src="scripts/app.js"></script></body></html>

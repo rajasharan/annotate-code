@@ -1,0 +1,98 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-input/paper-autogrow-textarea.html">
+
+<polymer-element name="annotation-view-all">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+      pre {
+        margin: 0px;
+      }
+      .code {
+        overflow: auto;
+        border-radius: 5px;
+        border: 1px solid red;
+        width: 45vw;
+        max-height: 25vh;
+        padding: 10px;
+      }
+      .margin {
+        margin-top: 10px;
+        margin-bottom: 10px;
+      }
+      #comment {
+        font-family: monospace;
+        font-size: large;
+        background-color: aliceblue;
+        width: 46vw;
+      }
+      .scroll {
+        height: 80vh;
+        overflow: auto;
+      }
+    </style>
+
+  <!--
+   -    Data Model
+   -    ==========
+   -    annotations: [{linenumbers: [], comment: ''}, ... ,]
+   -
+   -    lines: [{line: '', number: 34}, ... ,]
+   -->
+
+    <div class="scroll">
+      <template repeat="{{annotation in annotations}}">
+        <template if="{{annotation.linenumbers.length > 0}}">
+          <div class="code">
+            <template repeat="{{num in annotation.linenumbers}}">
+              <pre><code>{{lines[num-1].line}}</code></pre>
+            </template>
+          </div>
+        </template>
+
+        <template repeat="{{comment in annotation.comment}}">
+          <div id="comment">{{comment}}</div>
+        </template>
+        <hr>
+      </template>
+    </div>
+
+  </template>
+  <script>
+    (function () {
+
+      Polymer({
+        publish: {
+          lines: [],
+          key: ''
+        },
+
+        keyChanged: function(event, detail, sender) {
+          this.load();
+        },
+
+        load: function() {
+          this.annotations = [];
+
+          var v = window.localStorage.getItem(this.key);
+          if (!v) return;
+
+          try {
+            this.annotations = window.JSON.parse(v);
+            this.annotations = this.annotations.map(function(obj) {
+              obj.comment = obj.comment.split('\n');
+              return obj;
+            });
+          }
+          catch(x) {
+            console.error('annotation-view-all JSON parse fail:', x);
+          }
+        }
+      });
+
+    })();
+  </script>
+</polymer-element>

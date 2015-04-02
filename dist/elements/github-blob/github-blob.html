@@ -1,0 +1,223 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/core-ajax/core-ajax.html">
+<link rel="import" href="../../bower_components/core-list/core-list.html">
+<link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../bower_components/paper-tabs/paper-tab.html">
+<link rel="import" href="../../bower_components/core-pages/core-pages.html">
+
+<link rel="import" href="../annotation-views/annotation-add.html">
+<link rel="import" href="../annotation-views/annotation-view-all.html">
+
+<polymer-element name="github-blob" attributes="">
+  <template>
+    <more-route context name="blob" params="{{params}}"></more-route>
+    <style>
+      :host {
+        display: block;
+        /* height: 100%; */
+      }
+      paper-item {
+        cursor: default;
+        font-size: 14px;
+        font-style: italic;
+        height: 5vh;
+      }
+      code {
+        cursor: pointer;
+      }
+      .selected-true {
+        background-color: #8FDBF2;
+      }
+      core-list {
+        /* height: 100%; */
+        height: 85vh;
+        margin-left: 10px;
+      }
+      core-pages {
+        position: fixed;
+        left: 52vw;
+        width: 48vw;
+        height: 80vh;
+      }
+      paper-tabs {
+        height: 10vh;
+      }
+      paper-tabs::shadow #selectionBar {
+        background-color: #4aa846;
+      }
+      paper-tabs paper-tab::shadow #ink {
+        color: #4aa846;
+      }
+    </style>
+
+  <!--
+   -    Data Model
+   -    ==========
+   -    lines: [{line: '', number: 34}, ... ,]
+   -
+   -    annotation: [{comment: '', numbers: []}, ... ,]
+   -->
+
+    <div layout horizontal>
+      <div flex>
+        <paper-item noink>{{params.path | decodeURIComponent}}</paper-item>
+        <core-list id="list" data="{{lines}}" selection="{{selection}}" height="20" selectionEnabled multi>
+          <template>
+            <pre><code><span class="selected-{{selected}}">{{index | formatLineNumberWidth}} </span>| {{model.line}}</code></pre>
+          </template>
+        </core-list>
+      </div>
+
+      <div flex layout vertical>
+        <paper-tabs selected="{{tabSelected}}">
+          <paper-tab>Add new Annotation</paper-tab>
+          <paper-tab>View existings Annotations</paper-tab>
+        </paper-tabs>
+
+        <core-pages selected="{{tabSelected}}">
+          <annotation-add
+              lines="{{selection}}"
+              on-annotation-add="{{insertAnnotation}}"
+              warning="{{warning}}">
+          </annotation-add>
+
+          <annotation-view-all
+              id="viewall"
+              lines="{{lines}}"
+              key="{{params.owner}}:{{params.repo}}:{{params.sha}}">
+          </annotation-view-all>
+        </core-pages>
+      </div>
+    </div>
+
+    <core-ajax
+        id="ajax"
+        url="{{url}}"
+        handleAs="text"
+        headers='{"Accept": "application/vnd.github.v3.raw"}'
+        on-core-response="{{responseHandler}}"
+        on-core-error="{{errorHandler}}">
+    </core-ajax>
+
+  </template>
+  <script>
+    (function () {
+
+      Polymer({
+        decodeURIComponent: function(val) {
+          if (!val) return val;
+          else return window.decodeURIComponent(val);
+        },
+
+        tabSelected: 0,
+
+        publish: {
+          sha: '',
+          path: '',
+          url: '',
+          lines: []
+        },
+
+        linesChanged: function(oldval, newval) {
+          //console.log('changed lines:', this.lines);
+          this.$.list.updateSize();
+        },
+
+        observe: {
+          'params.path': 'changed',
+          'params.sha': 'changed'
+        },
+
+        changed: function(oldval, newval) {
+          console.log('blob: |', oldval, '->', newval, '|');
+          if (!newval) return;
+          //console.log('blob: ', this.params);
+          this.url = 'https://api.github.com/repos/' + this.params.owner + '/' + this.params.repo + '/git/blobs/' + this.params.sha;
+          this.$.ajax.go();
+          //this.$.list.updateSize();
+        },
+
+        formatLineNumberWidth: function(value) {
+          if (value === undefined || value === null) return value;
+
+          value = value+1;
+          var total = this.lines.length.toString().length;
+          var len = value.toString().length;
+          var diff = total - len;
+
+          if (diff > 0) {
+            var arr = Array.apply(null, Array(diff));
+            arr = arr.map(function() { return ' ';});
+            arr = arr.reduce(function(prev, curr) {
+              return prev+curr;
+            });
+
+            return value+arr;
+          }
+
+          return value+"";
+        },
+
+        responseHandler: function(event, detail, sender) {
+          //console.log('SUCCESS /blob: ', detail.response);
+          this.generateSourceLines(detail.response);
+        },
+
+        generateSourceLines: function(content) {
+          this.$.list.updateSize();
+          this.lines = content.split('\n').map(function(elem, index) {
+            return {line: elem, number: index+1};
+          });
+          this.$.list.updateSize();
+          //console.log('core-list updateSize:', this.params, this.lines);
+        },
+
+        errorHandler: function(event, detail, sender) {
+          console.log('ERROR /blob: ', detail.response.response);
+          this.generateSourceLines(detail.response.response);
+        },
+
+        insertAnnotation: function(event, detail, sender) {
+          var key = this.params.owner + ':' + this.params.repo + ':' + this.params.sha;
+          var value = window.localStorage.getItem(key);
+          try {
+            value = window.JSON.parse(value);
+          } catch(x) {
+            console.error('github-blob JSON parse fail:', x);
+            return;
+          }
+
+          console.log('insert annotation:', detail);
+          console.log('value:', value);
+
+          if (!value) {
+            value = [];
+          }
+          value.push(detail);
+          window.localStorage.setItem(key, window.JSON.stringify(value));
+          this.$.viewall.load();
+          
+          this.$.list.clearSelection();
+          this.warning = true;
+        },
+
+        onLoad: function(event, detail, sender) {
+          console.log('localstorage load:', detail);
+          console.log('value:', this.value);
+        },
+
+        /* can be called from on-core-activate if needed,
+         * but currently not being used
+        */
+        lineSelected: function(event, detail, sender) {
+          //console.log('LineSelected: ', detail.data.line);
+          //console.log('Selection: ', this.selection);
+          this.selection.forEach(function(elem) {
+            console.log(elem.number, ': ', elem.line);
+          });
+        }
+      });
+
+    })();
+  </script>
+</polymer-element>

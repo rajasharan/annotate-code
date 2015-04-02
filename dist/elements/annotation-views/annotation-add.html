@@ -1,0 +1,123 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../../bower_components/paper-input/paper-autogrow-textarea.html">
+
+<polymer-element name="annotation-add">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+      pre {
+        margin: 0px;
+      }
+      .code {
+        overflow: auto;
+        border-radius: 5px;
+        border: 1px solid red;
+        width: 45vw;
+        max-height: 25vh;
+        padding: 10px;
+        margin-top: 5px;
+      }
+      .margin {
+        margin-top: 10px;
+        margin-bottom: 10px;
+      }
+      #comment {
+        font-family: monospace;
+        font-size: large;
+        background-color: aliceblue;
+        width: 46vw;
+      }
+      .warning {
+        color: red;
+        font-family: monospace;
+        font-size: small;
+      }
+    </style>
+
+    <!--
+     -    Data Model
+     -    ==========
+     -    lines: [{line: '', number: 34}, ... ,]
+     -
+     -    annotation: [{comment: '', numbers: []}, ... ,]
+     -->
+
+    <template if="{{lines.length > 0}}">
+      <div class="code">
+        <template repeat="{{elem in lines}}">
+          <pre><code>{{elem.line}}</code></pre>
+        </template>
+      </div>
+    </template>
+
+    <div class="margin">
+      <paper-autogrow-textarea id="autogrow" rows="5" maxRows="5">
+        <textarea id="comment" placeholder="Tap on few lines of code and add annotation here..."></textarea>
+      </paper-autogrow-textarea>
+    </div>
+    <paper-button id="button" raised on-tap="{{annotate}}">Annotate <paper-spinner id="spinner"></paper-spinner></paper-button>
+
+    <template if="{{warning}}">
+      <div class="margin warning">
+        Storing only in localstorage. No server component yet.
+        Switch tab to view all annotations.
+      </div>
+    </template>
+
+  </template>
+  <script>
+    (function () {
+
+      Polymer({
+        publish: {
+          lines: [],
+          warning: false
+        },
+
+        observe: {
+          'lines': 'update'
+        },
+
+        update: function(oldval, newval) {
+          //console.log(this.lines);
+          this.lines.sort(function(a, b) {
+            return a.number - b.number;
+          });
+        },
+
+        annotate: function(event, detail, sender) {
+          if (this.$.comment.value.trim() === "") {
+            return;
+          }
+          if (this.lines.length === 0) {
+            this.clearTextArea();
+            return;
+          }
+          //console.log(this.$.comment.value);
+          //this.$.spinner.active = !this.$.spinner.active;
+          //this.lines = [];
+          var numbers = this.lines.map(function(obj) {
+            return obj.number;
+          });
+
+          var annotation = {};
+          annotation.comment = this.$.comment.value;
+          annotation.linenumbers = numbers;
+
+          this.fire('annotation-add', annotation);
+          this.clearTextArea();
+        },
+
+        clearTextArea: function() {
+            this.$.comment.value = "";
+            this.$.autogrow.update();
+        }
+      });
+
+    })();
+  </script>
+</polymer-element>
