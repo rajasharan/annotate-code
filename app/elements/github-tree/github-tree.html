@@ -12,22 +12,33 @@
     <style>
       :host {
         display: block;
-        /* height: 100%; */
       }
       core-list {
         height: 90vh;
-        /* height: 100%; */
       }
       pre {
         padding-left: 10px;
       }
+      .error {
+        color: red;
+        font-family: monospace;
+        font-size: small;
+        padding: 10px;
+      }
     </style>
 
-    <core-list data="{{tree}}" height="20" id="list">
-      <template>
-        <pre><code><a href="{{urlFor('blob', {path: encodeURIComponent([[model.path]]), sha: [[model.sha]]})}}">{{model.path}}</a></code></pre>
-      </template>
-    </core-list>
+    <template if="{{tree.length === 0}}">
+      <div class="error">{{error.documentation_url}}</div>
+      <div class="error">{{error.message}}</div>
+    </template>
+
+    <template if="{{tree.length > 0}}">
+      <core-list data="{{tree}}" height="20" id="list">
+        <template>
+          <pre><code><a href="{{urlFor('blob', {path: encodeURIComponent([[model.path]]), sha: [[model.sha]]})}}">{{model.path}}</a></code></pre>
+        </template>
+      </core-list>
+    </template>
 
     <core-ajax
         id="ajaxCommits"
@@ -101,7 +112,9 @@
         },
 
         errorCommits: function(event, detail, sender) {
-          console.log('ERROR /tree: ', detail);
+          console.log('ERROR /tree: ', detail.response.response);
+          this.tree = [];
+          this.error = detail.response.response;
         },
 
         responseTree: function(event, detail, sender) {
